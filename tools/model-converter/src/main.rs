@@ -3,19 +3,18 @@ mod hashmap;
 
 use serde::Deserialize;
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     fs::{self, File},
     io::{self, Read, Write},
     path::PathBuf,
 };
-use zerocopy::little_endian;
+use zerocopy::little_endian::U32;
 use zerocopy::{Immutable, IntoBytes};
 
-//use binbin::endian::Endian;
 use clap::Parser;
 use cli::Args;
 
-use crate::hashmap::build_simple_utf32str_u32_hashmap;
+use crate::hashmap::build_simple_bytes_u64_hashmap;
 
 const MAGIC: u32 = 0x52534B59; // 'RSKY'
 
@@ -30,8 +29,22 @@ fn main() {
     let tokenizer: Tokenizer =
         serde_json::from_str(&tokenizer_file).expect("Unable to parse tokenizer file");
 
-    let hashmap_data: Vec<(String, u32)> = tokenizer.model.vocab.into_iter().collect();
-    let hashmap_bytes = build_simple_utf32str_u32_hashmap(hashmap_data).unwrap();
+    let hashmap_data: Vec<(Vec<u8>, u64)> = tokenizer
+        .model
+        .vocab
+        .into_iter()
+        .map(|(key, value)| {
+            (
+                key.chars()
+                    .map(|c| U32::new(u32::from(c)))
+                    .collect::<Vec<U32>>()
+                    .as_bytes()
+                    .to_vec(),
+                value,
+            )
+        })
+        .collect();
+    let hashmap_bytes = build_simple_bytes_u64_hashmap(hashmap_data).unwrap();
 
     dbg!(hashmap_bytes.len());
 
@@ -59,7 +72,7 @@ struct Tokenizer {
 
 #[derive(Deserialize)]
 struct TokenizerModel {
-    vocab: HashMap<String, u32>,
+    vocab: BTreeMap<String, u64>,
     merges: Vec<String>,
 }
 
