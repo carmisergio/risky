@@ -6,14 +6,15 @@ RM := rm
 # Directories
 BUILD_DIR := build
 SRC_DIR := src
+INCLUDE_DIR := include
 TEST_DIR := test
 VENDOR_DIR := vendor
 BIN_DIR := bin
 
 # Compiler settings
-CFLAGS := -march=rv64gc -mabi=lp64d -g
-LDFLAGS := -static -I$(VENDOR_DIR)/unity
-LDFLAGS_TEST := -static -I$(VENDOR_DIR)/unity
+CFLAGS := -march=rv64gc -mabi=lp64d -g -I$(INCLUDE_DIR)
+CFLAGS_TEST := $(CFLAGS) -I$(VENDOR_DIR)/unity
+LDFLAGS := -static
 
 # Unity settings
 UNITY_FLAGS := -D UNITY_EXCLUDE_FLOAT -D UNITY_EXCLUDE_DOUBLE -D UNITY_EXCLUDE_MATH_H
@@ -30,14 +31,9 @@ BINS_SRCS_C := $(wildcard $(BIN_DIR)/*.c)
 BINS_SRCS_ASM := $(wildcard $(BIN_DIR)/*.s)
 BINS := $(patsubst $(BIN_DIR)/%.c, $(BUILD_DIR)/bin/%, $(BINS_SRCS_C)) $(patsubst $(BIN_DIR)/%.s, $(BUILD_DIR)/bin/%, $(BINS_SRCS_ASM))
 
-.PHONY: test-all test-c test-asm clean metatest
+.PHONY: test-all test-c test-asm clean bins
 
-metatest:
-	echo $(C_SRCS)
-	echo $(C_OBJS)
-	echo $(BINS_SRCS_C)
-	echo $(BINS_SRCS_ASM)
-	echo $(BINS)
+bins: $(BINS)
 
 test-all: test-c test-asm
 
@@ -56,7 +52,7 @@ test-asm: $(TEST_BINS_ASM)
 # Compile unity
 $(BUILD_DIR)/objs/unity.o: $(VENDOR_DIR)/unity/unity.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(UNITY_FLAGS) -c $< -o $@
+	$(CC) $(CFLAGS_TEST) $(LDFLAGS) $(UNITY_FLAGS) -c $< -o $@
 
 # Compile C modules
 $(BUILD_DIR)/objs/c/%.o: $(SRC_DIR)/c/%.c
@@ -71,17 +67,17 @@ $(BUILD_DIR)/objs/asm/%.o: $(SRC_DIR)/asm/%.s
 # Compile test modules
 $(BUILD_DIR)/objs/test/%.o: $(TEST_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(LDFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS_TEST) $(LDFLAGS) -c $< -o $@
 	
 # Link C test binaries
 $(BUILD_DIR)/test/c/%: $(BUILD_DIR)/objs/test/%.o $(C_OBJS) $(BUILD_DIR)/objs/unity.o
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(LDFLAGS_TEST) $^ -o $@
+	$(CC) $(CFLAGS_TEST) $(LDFLAGS) $^ -o $@
 
 # Link assembly test binaries
 $(BUILD_DIR)/test/asm/%: $(BUILD_DIR)/objs/test/%.o $(ASM_OBJS) $(BUILD_DIR)/objs/unity.o
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(LDFLAGS_TEST) $^ -o $@
+	$(CC) $(CFLAGS_TEST) $(LDFLAGS) $^ -o $@
 
 # Compile C binaries
 $(BUILD_DIR)/objs/bin/%.o: $(BIN_DIR)/%.c 
@@ -96,9 +92,8 @@ $(BUILD_DIR)/objs/bin/%.o: $(BIN_DIR)/%.s
 # Link binaries
 $(BUILD_DIR)/bin/%: $(BUILD_DIR)/objs/bin/%.o $(C_OBJS)
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(LDFLAGS_TEST) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 clean:
 	$(RM) -rf $(BUILD_DIR)
-
 

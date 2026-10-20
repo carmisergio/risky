@@ -1,7 +1,6 @@
 #include "unity.h"
 
-// Funcitons under test
-extern uint64_t fib(uint64_t n);
+#include <fib.h>
 
 void setUp(void) {}
 
