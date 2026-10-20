@@ -155,7 +155,9 @@ fn hash_sdbm(data: impl AsRef<[u8]>) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::hashmap::{build_simple_utf32str_u64_hashmap, hash_sdbm};
+    use crate::hashmap::{
+        build_simple_utf8str_u64_hashmap, build_simple_utf32str_u64_hashmap, hash_sdbm,
+    };
     use std::fs;
 
     #[test]
@@ -191,5 +193,19 @@ mod tests {
         println!("Built hashmap ({} bytes)", hashmap_bytes.len());
 
         fs::write("test_hashmap_1.bin", hashmap_bytes).expect("Error writing file");
+    }
+
+    #[test]
+    #[ignore]
+    fn print_test_hashmap_2() {
+        let data = (0..16).map(|i| {
+            let key = format!("key{}", i);
+            let value = i * 2;
+            (key, value as u64)
+        });
+        let hashmap_bytes =
+            build_simple_utf8str_u64_hashmap(data).expect("SimpleHashMap build error");
+
+        println!("{:?}", hashmap_bytes);
     }
 }
