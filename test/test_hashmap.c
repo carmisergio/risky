@@ -2,6 +2,7 @@
 #include "unity.h"
 
 #include <hashmap.h>
+#include <stdint.h>
 
 uint8_t test_hashmap_2[] = {
     33,  0,   0,   0,   0,   0,   0,   0,   40,  0,   0,   0,   5,   0,   0,
@@ -50,16 +51,41 @@ void setUp(void) {}
 
 void tearDown(void) {}
 
+void test_validity_1() {
+    uint64_t max = sizeof(test_hashmap_2) / sizeof(uint8_t);
+    hashmap_status res = simple_bytes_u64_hashmap_validate(test_hashmap_2, max);
+
+    TEST_ASSERT_EQUAL_UINT64(HASHMAP_OK, res);
+}
+
+void test_validity_2() {
+    uint64_t max = sizeof(test_hashmap_2) / sizeof(uint8_t);
+    hashmap_status res =
+        simple_bytes_u64_hashmap_validate(test_hashmap_2, max - 1);
+
+    TEST_ASSERT_EQUAL_UINT64(HASHMAP_MALFORMED, res);
+}
+
 void test_lookup_1() {
-    uint64_result_t res =
+    hashmap_result_u64 res =
         simple_bytes_u64_hashmap_lookup(test_hashmap_2, (uint8_t *)"key12", 5);
 
-    TEST_ASSERT_EQUAL_UINT64(0, res.status);
+    TEST_ASSERT_EQUAL_UINT64(HASHMAP_OK, res.status);
     TEST_ASSERT_EQUAL_UINT64(24, res.value);
+}
+
+void test_lookup_2() {
+    hashmap_result_u64 res = simple_bytes_u64_hashmap_lookup(
+        test_hashmap_2, (uint8_t *)"thiskeydoesnotexist", 19);
+
+    TEST_ASSERT_EQUAL_UINT64(HASHMAP_NOT_FOUND, res.status);
 }
 
 int main(void) {
     UNITY_BEGIN();
+    RUN_TEST(test_validity_1);
+    RUN_TEST(test_validity_2);
     RUN_TEST(test_lookup_1);
+    RUN_TEST(test_lookup_2);
     return UNITY_END();
 }
