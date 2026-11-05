@@ -2,10 +2,9 @@
 
 #include <errno.h>
 #include <stdint.h>
-#include <stdio.h>
 
-uint64_t utf8_to_unicode(uint8_t *src, uint64_t src_len, uint32_t *dst,
-                         uint64_t dst_len) {
+
+uint64_t utf8_to_unicode(uint8_t *src, uint64_t src_len, uint32_t *dst, uint64_t dst_len) {
     uint64_t dst_i = 0;
     uint64_t src_i = 0;
     uint64_t byte_to_analyze;
